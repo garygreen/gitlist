@@ -8,12 +8,17 @@ class Client extends BaseClient
 {
     protected $defaultBranch;
     protected $hidden;
+    protected $cacheFile;
 
     public function __construct($options = null)
     {
         parent::__construct($options['path']);
         $this->setDefaultBranch($options['default_branch']);
         $this->setHidden($options['hidden']);
+
+        if (!is_null($options['cache_file'])) {
+            $this->setCacheFile($options['cache_file']);
+        }
     }
 
     public function getRepositoryFromName($paths, $repo)
@@ -35,6 +40,10 @@ class Client extends BaseClient
     {
         $allRepositories = array();
 
+        if ($this->cacheFile && !is_null($cached = $this->getCached())) {
+            return $cached;
+        }
+
         foreach ($paths as $path) {
             $repositories = $this->recurseDirectory($path);
 
@@ -49,6 +58,13 @@ class Client extends BaseClient
         uksort($allRepositories, function($k1, $k2) {
             return strtolower($k2)<strtolower($k1);
         });
+
+        // var_dump($allRepositories); exit;
+
+        if ($this->cacheFile)
+        {
+            $this->createCache($allRepositories);
+        }
 
         return $allRepositories;
     }
@@ -153,6 +169,58 @@ class Client extends BaseClient
     protected function setHidden($hidden)
     {
         $this->hidden = $hidden;
+
+        return $this;
+    }
+
+    /**
+     * Set the cache repository file
+     *
+     * @param string $cacheFile
+     */
+    protected function setCacheFile($cacheFile)
+    {
+        $this->cacheFile = $cacheFile;
+
+        return $this;
+    }
+
+    /**
+     * Get cached repositories
+     * 
+     * @return array|null
+     */
+    public function getCached()
+    {
+        if ($this->cacheFile && file_exists($this->cacheFile)) {
+            $json = file_get_contents($this->cacheFile);
+            return json_decode($json, true);
+        }
+        return null;
+    }
+
+    /**
+     * Create cache of repositories
+     * 
+     * @param  array  $repositories
+     * @return boolean
+     */
+    public function createCache(array $repositories)
+    {
+        $json = json_encode($repositories);
+        return file_put_contents($this->cacheFile, $json);
+    }
+
+    /**
+     * Delete cached repositories
+     * 
+     * @return $this
+     */
+    public function deleteCached()
+    {
+        if ($this->cacheFile && file_exists($this->cacheFile)) {
+            unlink($this->cacheFile);
+        }
 
         return $this;
     }

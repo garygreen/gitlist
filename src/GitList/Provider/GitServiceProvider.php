@@ -21,6 +21,7 @@ class GitServiceProvider implements ServiceProviderInterface
             $options['path'] = $app['git.client'];
             $options['hidden'] = $app['git.hidden'];
             $options['ini.file'] = $app['ini.file'];
+            $options['cache_file'] = $app['cache_file'];
             $options['default_branch'] = $app['git.default_branch'];
 
             return new Client($options);
