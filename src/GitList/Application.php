@@ -46,6 +46,11 @@ class Application extends SilexApplication
         ));
 
         $repositories = $config->get('git', 'repositories');
+        $cacheRepositories = $config->get('app', 'cache');
+        $cacheRepositoryFile = null;
+        if ($cacheRepositories) {
+            $cacheRepositoryFile = $this->getCachePath() . 'repos.json';
+        }
 
         $this->register(new GitServiceProvider(), array(
             'git.client'         => $config->get('git', 'client'),
@@ -55,6 +60,7 @@ class Application extends SilexApplication
                                     $config->get('git', 'hidden') : array(),
             'git.default_branch' => $config->get('git', 'default_branch') ?
                                     $config->get('git', 'default_branch') : 'master',
+            'cache_file'         => $cacheRepositoryFile,
         ));
 
         $this->register(new ViewUtilServiceProvider());

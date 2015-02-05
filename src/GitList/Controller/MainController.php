@@ -23,6 +23,8 @@ class MainController implements ControllerProviderInterface
 
 
         $route->get('/refresh', function(Request $request) use ($app ) {
+            # Delete cache
+            $app['git']->deleteCached();
             # Go back to calling page
             return $app->redirect($request->headers->get('Referer'));
         })->bind('refresh');

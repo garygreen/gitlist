@@ -19,6 +19,7 @@ class InterfaceTest extends WebTestCase
            self::$tmpdir = DIRECTORY_SEPARATOR . 'tmp';
         }
 
+
         self::$tmpdir .= DIRECTORY_SEPARATOR . 'gitlist_' . md5(time() . mt_rand()) . DIRECTORY_SEPARATOR;
 
         $fs = new Filesystem();
@@ -36,6 +37,7 @@ class InterfaceTest extends WebTestCase
         $cacheDir = self::$tmpdir . DIRECTORY_SEPARATOR . 'cache';
         $fs->mkdir($cacheDir);
 
+        // var_dump($options); exit;
         $git = new Client($options);
 
         self::$gitPath = $options['path'];
