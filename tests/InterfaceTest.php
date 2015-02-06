@@ -114,6 +114,16 @@ class InterfaceTest extends WebTestCase
         $repository->addAll();
         $repository->commit("First commit");
         $repository->checkout('HEAD');
+
+        // Repository with special characters fixture
+        $git->createRepository(self::$tmpdir . "chars#~`test");
+        $repository = $git->getRepository(self::$tmpdir . "chars#~`test");
+        $repository->setConfig('user.name', 'Luke Skywalker');
+        $repository->setConfig('user.email', 'luke@rebel.org');
+        file_put_contents(self::$tmpdir . 'chars#~`test/README.md', "## chars#~`test\nchars#~`test is a *test* repository!");
+        $repository->addAll();
+        $repository->commit("Initial commit");
+        $repository->checkout('HEAD');
     }
 
     public function createApplication()
@@ -140,26 +150,30 @@ class InterfaceTest extends WebTestCase
         $this->assertTrue($client->getResponse()->isOk());
         $this->assertCount(1, $crawler->filter('title:contains("GitList")'));
 
+        $this->assertCount(1, $crawler->filter('div.repository-header a:contains("chars#~`test")'));
+        $this->assertEquals('/chars%23~%60test/', $crawler->filter('.repository-header a')->eq(0)->attr('href'));
+        $this->assertEquals('/chars%23~%60test/master/rss/', $crawler->filter('.repository-header a')->eq(1)->attr('href'));
+
         $this->assertCount(1, $crawler->filter('div.repository-header a:contains("detached-head")'));
-        $this->assertEquals('/detached-head/', $crawler->filter('.repository-header a')->eq(0)->attr('href'));
-        $this->assertEquals('/detached-head/master/rss/', $crawler->filter('.repository-header a')->eq(1)->attr('href'));
+        $this->assertEquals('/detached-head/', $crawler->filter('.repository-header a')->eq(2)->attr('href'));
+        $this->assertEquals('/detached-head/master/rss/', $crawler->filter('.repository-header a')->eq(3)->attr('href'));
 
         $this->assertCount(1, $crawler->filter('div.repository-header a:contains("develop")'));
-        $this->assertEquals('/develop/', $crawler->filter('.repository-header a')->eq(2)->attr('href'));
-        $this->assertEquals('/develop/master/rss/', $crawler->filter('.repository-header a')->eq(3)->attr('href'));
+        $this->assertEquals('/develop/', $crawler->filter('.repository-header a')->eq(4)->attr('href'));
+        $this->assertEquals('/develop/master/rss/', $crawler->filter('.repository-header a')->eq(5)->attr('href'));
 
         $this->assertCount(1, $crawler->filter('div.repository-header:contains("foobar")'));
         $this->assertCount(1, $crawler->filter('div.repository-body:contains("This is a test repo!")'));
-        $this->assertEquals('/foobar/', $crawler->filter('.repository-header a')->eq(4)->attr('href'));
-        $this->assertEquals('/foobar/master/rss/', $crawler->filter('.repository-header a')->eq(5)->attr('href'));
+        $this->assertEquals('/foobar/', $crawler->filter('.repository-header a')->eq(6)->attr('href'));
+        $this->assertEquals('/foobar/master/rss/', $crawler->filter('.repository-header a')->eq(7)->attr('href'));
 
         $this->assertCount(1, $crawler->filter('div.repository-header a:contains("GitTest")'));
-        $this->assertEquals('/GitTest/', $crawler->filter('.repository-header a')->eq(6)->attr('href'));
-        $this->assertEquals('/GitTest/master/rss/', $crawler->filter('.repository-header a')->eq(7)->attr('href'));
+        $this->assertEquals('/GitTest/', $crawler->filter('.repository-header a')->eq(8)->attr('href'));
+        $this->assertEquals('/GitTest/master/rss/', $crawler->filter('.repository-header a')->eq(9)->attr('href'));
 
         $this->assertCount(1, $crawler->filter('div.repository-header a:contains("nested/NestedRepo")'));
-        $this->assertEquals('/nested/NestedRepo/', $crawler->filter('.repository-header a')->eq(8)->attr('href'));
-        $this->assertEquals('/nested/NestedRepo/master/rss/', $crawler->filter('.repository-header a')->eq(9)->attr('href'));
+        $this->assertEquals('/nested/NestedRepo/', $crawler->filter('.repository-header a')->eq(10)->attr('href'));
+        $this->assertEquals('/nested/NestedRepo/master/rss/', $crawler->filter('.repository-header a')->eq(11)->attr('href'));
         $this->assertCount(1, $crawler->filter('div.repository-body:contains("This is a NESTED test repo!")'));
     }
 
@@ -350,10 +364,20 @@ class InterfaceTest extends WebTestCase
         $this->assertRegexp('/NESTED TEST BRANCH README/', $client->getResponse()->getContent());
     }
 
+    /**
+     * @covers GitList\Controller\TreeController::connect
+     */
+    public function testRepoWithSpecialCharacters()
+    {
+        $client = $this->createClient();
+
+        $crawler = $client->request('GET', '/chars%23~%60test/');
+        $this->assertTrue($client->getResponse()->isOk());
+    }
+
     public static function tearDownAfterClass()
     {
         $fs = new Filesystem();
         $fs->remove(self::$tmpdir);
     }
 }
-
